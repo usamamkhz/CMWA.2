@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { databaseStorage } from "./database";
 import { insertUserSchema, insertProjectSchema, updateProjectSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -15,7 +15,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
-      const user = await storage.getUserByEmail(email);
+      const user = await databaseStorage.getUserByEmail(email);
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -39,12 +39,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByEmail(userData.email);
+      const existingUser = await databaseStorage.getUserByEmail(userData.email);
       if (existingUser) {
         return res.status(409).json({ message: "User already exists" });
       }
       
-      const user = await storage.createUser(userData);
+      const user = await databaseStorage.createUser(userData);
       res.status(201).json({
         user: {
           id: user.id,
@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/my/:clientId", async (req, res) => {
     try {
       const clientId = parseInt(req.params.clientId);
-      const projects = await storage.getProjectsByClientId(clientId);
+      const projects = await databaseStorage.getProjectsByClientId(clientId);
       res.json(projects);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch projects" });
@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { driveLink } = req.body;
       
-      const updatedProject = await storage.updateProject(id, { driveLink });
+      const updatedProject = await databaseStorage.updateProject(id, { driveLink });
       if (!updatedProject) {
         return res.status(404).json({ message: "Project not found" });
       }
@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get("/api/admin/projects", async (req, res) => {
     try {
-      const projects = await storage.getAllProjectsWithClients();
+      const projects = await databaseStorage.getAllProjectsWithClients();
       res.json(projects);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch projects" });
@@ -97,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/clients", async (req, res) => {
     try {
-      const clients = await storage.getAllClients();
+      const clients = await databaseStorage.getAllClients();
       res.json(clients);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch clients" });
@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/projects", async (req, res) => {
     try {
       const projectData = insertProjectSchema.parse(req.body);
-      const project = await storage.createProject(projectData);
+      const project = await databaseStorage.createProject(projectData);
       res.status(201).json(project);
     } catch (error) {
       res.status(400).json({ message: "Invalid project data" });
@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = updateProjectSchema.parse(req.body);
       
-      const updatedProject = await storage.updateProject(id, updates);
+      const updatedProject = await databaseStorage.updateProject(id, updates);
       if (!updatedProject) {
         return res.status(404).json({ message: "Project not found" });
       }
@@ -133,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/projects/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteProject(id);
+      const deleted = await databaseStorage.deleteProject(id);
       
       if (!deleted) {
         return res.status(404).json({ message: "Project not found" });
@@ -148,8 +148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stats endpoint for admin dashboard
   app.get("/api/admin/stats", async (req, res) => {
     try {
-      const clients = await storage.getAllClients();
-      const projects = await storage.getAllProjectsWithClients();
+      const clients = await databaseStorage.getAllClients();
+      const projects = await databaseStorage.getAllProjectsWithClients();
       
       const stats = {
         totalClients: clients.length,

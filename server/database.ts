@@ -1,35 +1,69 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { createClient } from '@supabase/supabase-js';
 import { users, projects, type User, type InsertUser, type Project, type InsertProject, type UpdateProject, type ProjectWithClient, type ClientWithProjects } from '@shared/schema';
-import { eq, desc } from 'drizzle-orm';
 import type { IStorage } from './storage';
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
+const supabaseUrl = 'https://nsriiewwodqnuzjlbssd.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zcmlpZXd3b2RxbnV6amxic3NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4MTcwMDUsImV4cCI6MjA2NjM5MzAwNX0.T4nf4Dol5nS57ebPU0j2tm9ISPlKwCEkMAvNJTPelbU';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return result[0];
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    return data as User;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    return result[0];
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error) return undefined;
+    return data as User;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(user).returning();
-    return result[0];
+    const { data, error } = await supabase
+      .from('users')
+      .insert(user)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as User;
   }
 
   async getProject(id: number): Promise<Project | undefined> {
-    const result = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
-    return result[0];
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    return data as Project;
   }
 
   async getProjectsByClientId(clientId: number): Promise<Project[]> {
-    return await db.select().from(projects).where(eq(projects.clientId, clientId)).orderBy(desc(projects.createdAt));
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching projects by client ID:', error);
+      return [];
+    }
+    return data as Project[];
   }
 
   async getAllProjectsWithClients(): Promise<ProjectWithClient[]> {
