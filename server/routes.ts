@@ -77,16 +77,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { driveLink } = req.body;
+      console.log("Updating project:", id, { driveLink });
 
-      const updatedProject = await databaseStorage.updateProject(id, {
-        driveLink,
-      });
-      if (!updatedProject) {
-        return res.status(404).json({ message: "Project not found" });
+      // Transform data to match database column names
+      const transformedData = {
+        drive_link: driveLink,
+        updated_at: new Date().toISOString()
+      };
+
+      // Import supabase client
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://nsriiewwodqnuzjlbssd.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zcmlpZXd3b2RxbnV6amxic3NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4MTcwMDUsImV4cCI6MjA2NjM5MzAwNX0.T4nf4Dol5nS57ebPU0j2tm9ISPlKwCEkMAvNJTPelbU';
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Update project directly with transformed data
+      const { data, error } = await supabase
+        .from('projects')
+        .update(transformedData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating project:', error);
+        throw error;
       }
 
-      res.json(updatedProject);
+      console.log('Project updated:', data);
+      res.json(data);
     } catch (error) {
+      console.error("Drive link update error:", error);
       res.status(500).json({ message: "Failed to update drive link" });
     }
   });

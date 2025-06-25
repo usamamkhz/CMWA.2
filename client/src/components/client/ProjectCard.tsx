@@ -92,9 +92,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
         <div className="mb-4">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progress</span>
-            <span>{project.completion_percentage}%</span>
+            <span>{project.completionPercentage}%</span>
           </div>
-          <Progress value={project.completion_percentage} className="h-2" />
+          <Progress value={project.completionPercentage} className="h-2" />
         </div>
 
         {/* Admin Notes */}
