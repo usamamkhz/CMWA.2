@@ -35,9 +35,27 @@ export class MemStorage implements IStorage {
     // Create default admin user
     this.createUser({
       email: "admin@freelancehub.com",
-      password: "admin123",
+      password: "admin123", 
       name: "Admin User",
       role: "admin"
+    });
+
+    // Create demo client
+    this.createUser({
+      email: "client@example.com",
+      password: "client123",
+      name: "Demo Client", 
+      role: "client"
+    }).then((client) => {
+      // Create demo project
+      this.createProject({
+        name: "Website Redesign",
+        description: "Complete redesign of company website with modern UI/UX",
+        status: "in-progress",
+        completionPercentage: 75,
+        notes: "Please review the latest mockups and provide feedback on the color scheme.",
+        clientId: client.id
+      });
     });
   }
 
