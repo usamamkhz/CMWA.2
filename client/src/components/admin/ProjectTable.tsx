@@ -203,17 +203,19 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {project.driveLink ? (
-                        <a
-                          href={project.driveLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 text-sm flex items-center"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          View Link
-                        </a>
+                        <div className="flex items-center space-x-2">
+                          <a
+                            href={project.driveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:text-primary/80 text-sm flex items-center px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Open Drive
+                          </a>
+                        </div>
                       ) : (
-                        <span className="text-gray-400 text-sm">No link provided</span>
+                        <span className="text-gray-400 text-sm italic">Waiting for client upload</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">

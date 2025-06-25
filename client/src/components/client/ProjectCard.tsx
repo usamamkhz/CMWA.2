@@ -60,8 +60,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <CardContent className="p-0">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
-            <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.name}</h3>
+            <p className="text-sm text-gray-600 leading-relaxed">{project.description}</p>
           </div>
           <Badge className={status.color}>
             {status.label}
@@ -79,34 +79,47 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
         {/* Admin Notes */}
         {project.notes && (
-          <div className={`mb-4 p-3 rounded-lg ${
-            isComplete ? 'bg-green-50' : 'bg-gray-50'
+          <div className={`mb-4 p-3 rounded-lg border-l-4 ${
+            isComplete 
+              ? 'bg-green-50 border-green-400' 
+              : 'bg-blue-50 border-blue-400'
           }`}>
-            <h4 className="text-sm font-medium text-gray-900 mb-1">Admin Notes:</h4>
-            <p className="text-sm text-gray-600">{project.notes}</p>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">📝 Admin Notes:</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">{project.notes}</p>
           </div>
         )}
 
         {/* Drive Link */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Google Drive Link</Label>
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-gray-700 flex items-center">
+            <span className="mr-2">📁</span>
+            Google Drive Link
+          </Label>
           <Input
             type="url"
-            placeholder="https://drive.google.com/..."
+            placeholder="https://drive.google.com/... (paste your shareable link here)"
             value={driveLink}
             onChange={(e) => setDriveLink(e.target.value)}
             disabled={isComplete}
+            className={isComplete ? 'bg-gray-50' : ''}
           />
+          {driveLink && !isComplete && (
+            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+              Preview: Admin will be able to access your files via this link
+            </div>
+          )}
           <Button
             className="w-full"
             onClick={handleUpdateLink}
-            disabled={updateDriveLinkMutation.isPending || isComplete}
+            disabled={updateDriveLinkMutation.isPending || isComplete || !driveLink.trim()}
           >
             {isComplete 
-              ? 'Project Complete' 
+              ? 'Project Complete - Link Saved' 
               : updateDriveLinkMutation.isPending 
                 ? 'Updating...' 
-                : 'Update Link'
+                : driveLink.trim()
+                  ? 'Update Drive Link'
+                  : 'Add Drive Link'
             }
           </Button>
         </div>

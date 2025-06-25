@@ -135,8 +135,11 @@ projects: {
 - **Auto-deployment**: Configured for autoscale deployment target
 - **Build Commands**: `npm run build` for production assets
 
-## Changelog
-- June 25, 2025. Initial setup
+## Recent Changes
+- June 25, 2025: Initial setup with complete freelance client management system
+- Enhanced Google Drive link functionality with better UX for both clients and admins
+- Improved admin notes display with visual styling and clear labeling
+- Added proper role-based permissions for Drive link access (clients edit, admins view-only)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
