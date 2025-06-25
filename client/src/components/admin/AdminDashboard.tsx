@@ -3,11 +3,12 @@ import { Crown, LogOut, Plus, Users, Clock, CheckCircle, Kanban as Diagram } fro
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '../auth/AuthProvider';
 import { ProjectTable } from './ProjectTable';
 import { AddProjectModal } from './AddProjectModal';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import type { ProjectWithClient } from '@shared/schema';
+import type { ProjectWithClient, User } from '@shared/schema';
 
 interface AdminStats {
   totalClients: number;
@@ -19,6 +20,7 @@ interface AdminStats {
 export function AdminDashboard() {
   const { user, logout } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
 
   const { data: projects, isLoading: projectsLoading } = useQuery<ProjectWithClient[]>({
     queryKey: ['/api/admin/projects'],
@@ -28,9 +30,18 @@ export function AdminDashboard() {
     queryKey: ['/api/admin/stats'],
   });
 
-  if (projectsLoading || statsLoading) {
+  const { data: clients, isLoading: clientsLoading } = useQuery<User[]>({
+    queryKey: ['/api/admin/clients'],
+  });
+
+  if (projectsLoading || statsLoading || clientsLoading) {
     return <LoadingSpinner />;
   }
+
+  // Filter projects by selected client if any
+  const filteredProjects = selectedClientId 
+    ? projects?.filter(p => p.client_id === selectedClientId) 
+    : projects;
 
   const statCards = [
     {
@@ -111,8 +122,42 @@ export function AdminDashboard() {
           ))}
         </div>
 
-        {/* Projects Table */}
-        <ProjectTable projects={projects || []} />
+        {/* Client Selection and Projects */}
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Project Management</h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">Filter by Client:</label>
+                  <Select value={selectedClientId?.toString() || "all"} onValueChange={(value) => setSelectedClientId(value === "all" ? null : parseInt(value))}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="All Clients" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Clients</SelectItem>
+                      {clients?.map((client) => (
+                        <SelectItem key={client.id} value={client.id.toString()}>
+                          {client.name} ({client.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            {selectedClientId && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  Showing projects for: <strong>{clients?.find(c => c.id === selectedClientId)?.name}</strong>
+                </p>
+              </div>
+            )}
+            
+            <ProjectTable projects={filteredProjects || []} />
+          </div>
+        </div>
       </main>
 
       {/* Add Project Modal */}

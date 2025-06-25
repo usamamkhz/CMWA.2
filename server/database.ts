@@ -79,81 +79,151 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProjectsWithClients(): Promise<ProjectWithClient[]> {
-    const result = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        status: projects.status,
-        completionPercentage: projects.completionPercentage,
-        notes: projects.notes,
-        driveLink: projects.driveLink,
-        clientId: projects.clientId,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        client: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-        },
-      })
-      .from(projects)
-      .innerJoin(users, eq(projects.clientId, users.id))
-      .orderBy(desc(projects.createdAt));
+    console.log('Fetching all projects with clients...');
+    
+    // First get all projects
+    const { data: projects, error: projectsError } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (projectsError) {
+      console.error('Error fetching projects:', projectsError);
+      throw projectsError;
+    }
 
-    return result;
+    // Then get all users
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, name, email')
+      .eq('role', 'client');
+    
+    if (usersError) {
+      console.error('Error fetching users:', usersError);
+      throw usersError;
+    }
+
+    // Manually join the data
+    const projectsWithClients = projects?.map(project => {
+      const client = users?.find(user => user.id === project.client_id);
+      return {
+        ...project,
+        client: client || { id: 0, name: 'Unknown', email: 'unknown@example.com' }
+      };
+    }) || [];
+    
+    console.log('Projects with clients fetched:', projectsWithClients);
+    return projectsWithClients as ProjectWithClient[];
   }
 
   async createProject(project: InsertProject): Promise<Project> {
-    const result = await db.insert(projects).values(project).returning();
-    return result[0];
+    console.log('Creating project:', project);
+    const { data, error } = await supabase
+      .from('projects')
+      .insert(project)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating project:', error);
+      throw error;
+    }
+    
+    console.log('Project created:', data);
+    return data as Project;
   }
 
   async updateProject(id: number, updates: UpdateProject): Promise<Project | undefined> {
-    const result = await db.update(projects)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(projects.id, id))
-      .returning();
-    return result[0];
+    console.log('Updating project:', id, updates);
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating project:', error);
+      throw error;
+    }
+    
+    console.log('Project updated:', data);
+    return data as Project;
   }
 
   async deleteProject(id: number): Promise<boolean> {
-    const result = await db.delete(projects).where(eq(projects.id, id));
-    return result.rowCount > 0;
+    console.log('Deleting project:', id);
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting project:', error);
+      throw error;
+    }
+    
+    console.log('Project deleted successfully');
+    return true;
   }
 
   async getAllClients(): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.role, 'client')).orderBy(desc(users.createdAt));
+    console.log('Fetching all clients...');
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'client')
+      .order('name');
+    
+    if (error) {
+      console.error('Error fetching clients:', error);
+      throw error;
+    }
+    
+    console.log('Clients fetched:', data);
+    return data as User[];
   }
 
   async getClientWithProjects(clientId: number): Promise<ClientWithProjects | undefined> {
-    const client = await db.select().from(users).where(eq(users.id, clientId)).limit(1);
-    if (!client[0] || client[0].role !== 'client') return undefined;
-
-    const clientProjects = await this.getProjectsByClientId(clientId);
+    console.log('Fetching client with projects:', clientId);
     
-    return {
-      id: client[0].id,
-      name: client[0].name,
-      email: client[0].email,
-      projects: clientProjects,
+    const client = await this.getUser(clientId);
+    if (!client || client.role !== 'client') {
+      return undefined;
+    }
+    
+    const projects = await this.getProjectsByClientId(clientId);
+    
+    const result = {
+      id: client.id,
+      name: client.name,
+      email: client.email,
+      projects: projects
     };
+    
+    console.log('Client with projects fetched:', result);
+    return result;
   }
 
   async getAllClientsWithProjects(): Promise<ClientWithProjects[]> {
-    const clients = await this.getAllClients();
-    const clientsWithProjects: ClientWithProjects[] = [];
+    console.log('Fetching all clients with projects...');
     
+    // Get all clients
+    const clients = await this.getAllClients();
+    
+    // Get projects for each client
+    const clientsWithProjects: ClientWithProjects[] = [];
     for (const client of clients) {
-      const clientProjects = await this.getProjectsByClientId(client.id);
+      const projects = await this.getProjectsByClientId(client.id);
       clientsWithProjects.push({
         id: client.id,
         name: client.name,
         email: client.email,
-        projects: clientProjects,
+        projects: projects
       });
     }
     
+    console.log('Clients with projects fetched:', clientsWithProjects);
     return clientsWithProjects;
   }
 }
