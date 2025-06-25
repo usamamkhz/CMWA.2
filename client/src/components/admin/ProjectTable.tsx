@@ -3,13 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Select components removed - status editing now only in edit modal
 import { Slider } from "@/components/ui/slider";
 import { ExternalLink, Edit, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -80,12 +74,7 @@ export function ProjectTable({ projects }: ProjectTableProps) {
     },
   });
 
-  const handleStatusChange = (projectId: number, status: string) => {
-    updateProjectMutation.mutate({
-      id: projectId,
-      updates: { status },
-    });
-  };
+  // Status changes are now handled only through the edit modal
 
   const handleProgressChange = (
     projectId: number,
@@ -189,45 +178,25 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Select
-                        value={project.status}
-                        onValueChange={(value) =>
-                          handleStatusChange(project.id, value)
+                      <Badge
+                        className={
+                          statusConfig[
+                            project.status as keyof typeof statusConfig
+                          ].color
                         }
                       >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue>
-                            <Badge
-                              className={
-                                statusConfig[
-                                  project.status as keyof typeof statusConfig
-                                ].color
-                              }
-                            >
-                              {
-                                statusConfig[
-                                  project.status as keyof typeof statusConfig
-                                ].label
-                              }
-                            </Badge>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="in-progress">
-                            In Progress
-                          </SelectItem>
-                          <SelectItem value="waiting-feedback">
-                            Waiting for Feedback
-                          </SelectItem>
-                          <SelectItem value="complete">Complete</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {
+                          statusConfig[
+                            project.status as keyof typeof statusConfig
+                          ].label
+                        }
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <div className="w-16">
                           <Slider
-                            value={[project.completion_percentage]}
+                            value={[project.completionPercentage]}
                             onValueChange={([value]) =>
                               handleProgressChange(project.id, value)
                             }
@@ -237,7 +206,7 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                           />
                         </div>
                         <span className="text-sm text-gray-600 w-12">
-                          {project.completion_percentage}%
+                          {project.completionPercentage}%
                         </span>
                       </div>
                     </td>
