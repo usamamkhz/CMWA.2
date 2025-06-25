@@ -33,7 +33,7 @@ const statusConfig = {
 };
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const [driveLink, setDriveLink] = useState(project.drive_link || "");
+  const [driveLink, setDriveLink] = useState(project.driveLink || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -43,7 +43,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         "PATCH",
         `/api/projects/${project.id}/drive-link`,
         {
-          drive_link: link,
+          driveLink: link,
         },
       );
       return response.json();
