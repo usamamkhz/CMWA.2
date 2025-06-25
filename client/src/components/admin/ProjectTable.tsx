@@ -196,7 +196,7 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                       <div className="flex items-center space-x-2">
                         <div className="w-16">
                           <Slider
-                            value={[project.completionPercentage]}
+                            value={[project.completion_percentage]}
                             onValueChange={([value]) =>
                               handleProgressChange(project.id, value)
                             }
@@ -206,15 +206,15 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                           />
                         </div>
                         <span className="text-sm text-gray-600 w-12">
-                          {project.completionPercentage}%
+                          {project.completion_percentage}%
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {project.driveLink ? (
+                      {project.drive_link ? (
                         <div className="flex items-center space-x-2">
                           <a
-                            href={project.driveLink}
+                            href={project.drive_link}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:text-primary/80 text-sm flex items-center px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors"
