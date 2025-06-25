@@ -31,13 +31,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    console.log('Creating user with data:', user);
     const { data, error } = await supabase
       .from('users')
       .insert(user)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase createUser error:', error);
+      
+      // Check if tables exist
+      if (error.code === '42P01') {
+        throw new Error('Database tables do not exist. Please create them in Supabase SQL Editor.');
+      }
+      
+      throw error;
+    }
+    
+    console.log('User created in Supabase:', data);
     return data as User;
   }
 

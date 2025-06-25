@@ -31,46 +31,110 @@ export async function setupDatabase() {
     
     console.log('Supabase connection successful!');
     
-    // Now try to set up tables using raw SQL via Supabase
-    const { error: usersError } = await supabase.rpc('exec_sql', {
-      sql: `
-        CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY,
-          email TEXT NOT NULL UNIQUE,
-          password TEXT NOT NULL,
-          name TEXT NOT NULL,
-          role TEXT NOT NULL DEFAULT 'client',
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL
-        )
-      `
-    });
+    // Use Supabase Auth and create custom profile tables
+    console.log('='.repeat(80));
+    console.log('DATABASE SETUP REQUIRED');
+    console.log('='.repeat(80));
+    console.log('');
+    console.log('To enable signup and full functionality, create these tables:');
+    console.log('');
+    console.log('1. Open Supabase SQL Editor:');
+    console.log('   https://nsriiewwodqnuzjlbssd.supabase.co/project/nsriiewwodqnuzjlbssd/sql/new');
+    console.log('');
+    console.log('2. Copy and execute this SQL:');
+    console.log('');
+    console.log('-- Create users table');
+    console.log('CREATE TABLE IF NOT EXISTS users (');
+    console.log('  id SERIAL PRIMARY KEY,');
+    console.log('  email TEXT NOT NULL UNIQUE,');
+    console.log('  password TEXT NOT NULL,');
+    console.log('  name TEXT NOT NULL,');
+    console.log('  role TEXT NOT NULL DEFAULT \'client\',');
+    console.log('  created_at TIMESTAMP DEFAULT NOW() NOT NULL');
+    console.log(');');
+    console.log('');
+    console.log('-- Create projects table');
+    console.log('CREATE TABLE IF NOT EXISTS projects (');
+    console.log('  id SERIAL PRIMARY KEY,');
+    console.log('  name TEXT NOT NULL,');
+    console.log('  description TEXT NOT NULL,');
+    console.log('  status TEXT NOT NULL DEFAULT \'in-progress\',');
+    console.log('  completion_percentage INTEGER NOT NULL DEFAULT 0,');
+    console.log('  notes TEXT,');
+    console.log('  drive_link TEXT,');
+    console.log('  client_id INTEGER NOT NULL,');
+    console.log('  created_at TIMESTAMP DEFAULT NOW() NOT NULL,');
+    console.log('  updated_at TIMESTAMP DEFAULT NOW() NOT NULL');
+    console.log(');');
+    console.log('');
+    console.log('-- Insert demo data');
+    console.log('INSERT INTO users (email, password, name, role)');
+    console.log('VALUES (\'admin@freelancehub.com\', \'admin123\', \'Admin User\', \'admin\')');
+    console.log('ON CONFLICT (email) DO NOTHING;');
+    console.log('');
+    console.log('INSERT INTO users (email, password, name, role)');
+    console.log('VALUES (\'client@example.com\', \'client123\', \'Demo Client\', \'client\')');
+    console.log('ON CONFLICT (email) DO NOTHING;');
+    console.log('');
+    console.log('3. Click "Run" to execute');
+    console.log('4. Refresh this app to test signup');
+    console.log('');
+    console.log('='.repeat(80));
     
-    if (usersError) {
-      console.log('Creating users table via Supabase RPC failed, trying direct approach...');
-      // Fallback to direct SQL execution
-      const { error } = await supabase.from('users').select('*').limit(1);
-      if (!error) {
-        console.log('Users table already exists');
-      }
-    }
+    // Check if tables exist and try to create them manually if needed
+    const { error: usersCheck } = await supabase.from('users').select('count', { count: 'exact', head: true });
+    const { error: projectsCheck } = await supabase.from('projects').select('count', { count: 'exact', head: true });
+    
+    if (!usersCheck && !projectsCheck) {
+      console.log('Tables detected! Database setup complete.');
+      
+      // Insert demo data if tables exist
+      const { data: existingAdmin } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', 'admin@freelancehub.com')
+        .maybeSingle();
 
-    // Create projects table
-    const { error: projectsError } = await supabase.rpc('exec_sql', {
-      sql: `
-        CREATE TABLE IF NOT EXISTS projects (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          description TEXT NOT NULL,
-          status TEXT NOT NULL DEFAULT 'in-progress',
-          completion_percentage INTEGER NOT NULL DEFAULT 0,
-          notes TEXT,
-          drive_link TEXT,
-          client_id INTEGER NOT NULL,
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-        )
-      `
-    });
+      if (!existingAdmin) {
+        await supabase.from('users').insert({
+          email: 'admin@freelancehub.com',
+          password: 'admin123',
+          name: 'Admin User',
+          role: 'admin'
+        });
+        console.log('Demo admin user created');
+      }
+
+      const { data: existingClient } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', 'client@example.com')
+        .maybeSingle();
+
+      if (!existingClient) {
+        const { data: newClient } = await supabase.from('users').insert({
+          email: 'client@example.com',
+          password: 'client123',
+          name: 'Demo Client',
+          role: 'client'
+        }).select().single();
+        
+        if (newClient) {
+          await supabase.from('projects').insert({
+            name: 'Website Redesign',
+            description: 'Complete redesign of company website with modern UI/UX',
+            status: 'in-progress',
+            completion_percentage: 75,
+            notes: 'Please review the latest mockups and provide feedback on the color scheme.',
+            client_id: newClient.id
+          });
+          console.log('Demo client and project created');
+        }
+      }
+    } else {
+      console.log('Tables not found. You need to create them manually.');
+      console.log('Please go to your Supabase SQL Editor and run the commands above.');
+    }
 
     // Insert default admin user using Supabase client
     const { data: existingAdmin, error: adminCheckError } = await supabase

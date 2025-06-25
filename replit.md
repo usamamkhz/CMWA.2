@@ -142,7 +142,8 @@ projects: {
 - Added proper role-based permissions for Drive link access (clients edit, admins view-only)
 - Successfully connected to Supabase database with user credentials
 - Converted all database operations from in-memory storage to Supabase integration
-- Users can now sign up and their data persists in the actual Supabase database
+- Database tables need to be created manually in Supabase SQL Editor for full functionality
+- Signup functionality ready but requires database table creation
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
