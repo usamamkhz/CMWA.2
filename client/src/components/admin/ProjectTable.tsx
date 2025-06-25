@@ -1,66 +1,81 @@
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { ExternalLink, Edit, Trash2 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { EditProjectModal } from './EditProjectModal';
-import type { ProjectWithClient } from '@shared/schema';
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { ExternalLink, Edit, Trash2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { EditProjectModal } from "./EditProjectModal";
+import type { ProjectWithClient } from "@shared/schema";
 
 interface ProjectTableProps {
   projects: ProjectWithClient[];
 }
 
 const statusConfig = {
-  'in-progress': { label: 'In Progress', color: 'bg-blue-100 text-blue-800' },
-  'waiting-feedback': { label: 'Waiting for Feedback', color: 'bg-amber-100 text-amber-800' },
-  'complete': { label: 'Complete', color: 'bg-green-100 text-green-800' },
+  "in-progress": { label: "In Progress", color: "bg-blue-100 text-blue-800" },
+  "waiting-feedback": {
+    label: "Waiting for Feedback",
+    color: "bg-amber-100 text-amber-800",
+  },
+  complete: { label: "Complete", color: "bg-green-100 text-green-800" },
 };
 
 export function ProjectTable({ projects }: ProjectTableProps) {
-  const [editingProject, setEditingProject] = useState<ProjectWithClient | null>(null);
+  const [editingProject, setEditingProject] =
+    useState<ProjectWithClient | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const updateProjectMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
-      const response = await apiRequest('PATCH', `/api/admin/projects/${id}`, updates);
+      const response = await apiRequest(
+        "PATCH",
+        `/api/admin/projects/${id}`,
+        updates,
+      );
+      console.log("Update object:", updates);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/projects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
     },
     onError: () => {
       toast({
-        title: 'Error',
-        description: 'Failed to update project',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update project",
+        variant: "destructive",
       });
     },
   });
 
   const deleteProjectMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/admin/projects/${id}`);
+      await apiRequest("DELETE", `/api/admin/projects/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/projects'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       toast({
-        title: 'Success',
-        description: 'Project deleted successfully',
+        title: "Success",
+        description: "Project deleted successfully",
       });
     },
     onError: () => {
       toast({
-        title: 'Error',
-        description: 'Failed to delete project',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to delete project",
+        variant: "destructive",
       });
     },
   });
@@ -72,24 +87,27 @@ export function ProjectTable({ projects }: ProjectTableProps) {
     });
   };
 
-  const handleProgressChange = (projectId: number, completionPercentage: number) => {
-    updateProjectMutation.mutate({
-      id: projectId,
-      updates: { completionPercentage },
-    });
+  const handleProgressChange = (
+    projectId: number,
+    completionPercentage: number,
+  ) => {
+    // updateProjectMutation.mutate({
+    //   id: projectId,
+    //  updates: { completion_percentage: //completionPercentage },
+    //   });
   };
 
   const handleDelete = (projectId: number) => {
-    if (confirm('Are you sure you want to delete this project?')) {
+    if (confirm("Are you sure you want to delete this project?")) {
       deleteProjectMutation.mutate(projectId);
     }
   };
 
   const getClientInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -99,8 +117,12 @@ export function ProjectTable({ projects }: ProjectTableProps) {
       <Card>
         <CardContent className="p-6">
           <div className="text-center py-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
-            <p className="text-gray-600">Create your first project to get started.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No projects yet
+            </h3>
+            <p className="text-gray-600">
+              Create your first project to get started.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -169,18 +191,34 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Select
                         value={project.status}
-                        onValueChange={(value) => handleStatusChange(project.id, value)}
+                        onValueChange={(value) =>
+                          handleStatusChange(project.id, value)
+                        }
                       >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue>
-                            <Badge className={statusConfig[project.status as keyof typeof statusConfig].color}>
-                              {statusConfig[project.status as keyof typeof statusConfig].label}
+                            <Badge
+                              className={
+                                statusConfig[
+                                  project.status as keyof typeof statusConfig
+                                ].color
+                              }
+                            >
+                              {
+                                statusConfig[
+                                  project.status as keyof typeof statusConfig
+                                ].label
+                              }
                             </Badge>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="in-progress">In Progress</SelectItem>
-                          <SelectItem value="waiting-feedback">Waiting for Feedback</SelectItem>
+                          <SelectItem value="in-progress">
+                            In Progress
+                          </SelectItem>
+                          <SelectItem value="waiting-feedback">
+                            Waiting for Feedback
+                          </SelectItem>
                           <SelectItem value="complete">Complete</SelectItem>
                         </SelectContent>
                       </Select>
@@ -189,15 +227,17 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                       <div className="flex items-center space-x-2">
                         <div className="w-16">
                           <Slider
-                            value={[project.completionPercentage]}
-                            onValueChange={([value]) => handleProgressChange(project.id, value)}
+                            value={[project.completion_percentage]}
+                            onValueChange={([value]) =>
+                              handleProgressChange(project.id, value)
+                            }
                             max={100}
                             step={5}
                             className="w-full"
                           />
                         </div>
                         <span className="text-sm text-gray-600 w-12">
-                          {project.completionPercentage}%
+                          {project.completion_percentage}%
                         </span>
                       </div>
                     </td>
@@ -215,7 +255,9 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                           </a>
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-sm italic">Waiting for client upload</span>
+                        <span className="text-gray-400 text-sm italic">
+                          Waiting for client upload
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
