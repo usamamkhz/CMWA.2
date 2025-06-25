@@ -106,10 +106,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/projects", async (req, res) => {
     try {
-      const projectData = insertProjectSchema.parse(req.body);
+      // Map clientId to client_id for database compatibility
+      const { clientId, ...rest } = req.body;
+      const projectData = insertProjectSchema.parse({
+        ...rest,
+        clientId: clientId
+      });
       const project = await databaseStorage.createProject(projectData);
       res.status(201).json(project);
     } catch (error) {
+      console.error("Project creation error:", error);
       res.status(400).json({ message: "Invalid project data" });
     }
   });
